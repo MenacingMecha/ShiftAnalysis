@@ -1,7 +1,8 @@
-from sys import argv
+# TODO: change these all to 'import modulename'
+from argparse import ArgumentParser, Namespace
 from icalendar import Calendar
 from datetime import datetime, date
-from typing import List
+from typing import List  # except this one
 from statistics import mean
 
 class WorkShift:
@@ -43,6 +44,7 @@ class ShiftAnalysis:
         shift_durations = []
         for shift in shifts:
             shift_durations.append(shift.GetDuration())
+        # TODO: raise error if no shifts
         return mean(shift_durations)
 
     @staticmethod
@@ -50,6 +52,7 @@ class ShiftAnalysis:
         work_day_durations = []
         for day in work_days:
             work_day_durations.append(day.get_duration())
+        # TODO: raise error if no shifts
         return mean(work_day_durations)
 
     @staticmethod
@@ -75,6 +78,7 @@ def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: st
                 new_shift = WorkShift(start, end, is_crunch)
                 work_shifts.append(new_shift)
     source_file.close()
+    # TODO: raise error if no shifts
     return work_shifts
 
 def get_work_days_from_shifts(shifts: List[WorkShift]) -> List[WorkDay]:
@@ -101,9 +105,16 @@ def print_duration_hours(summary:str, value:float, float_percision: int = 2):
 def print_percentage(summary:str, value_a:int, value_b: int, float_percision: int = 2):
     print(summary+":", value_a, "/", value_b, "({:.0%})".format(value_a/value_b))
 
+def parse_arguments() -> Namespace:
+    argument_parser = ArgumentParser(description="Analyse work habits from ical calendar")
+    argument_parser.add_argument('pathToIcs', help='path to the ical file to analyse')
+    argument_parser.add_argument('-s', dest='shift_keyword', default='Shift', help='keyword for detirmining which events are shifts')
+    argument_parser.add_argument('-c', dest='crunch_keyword', default='Crunch', help='keyword for detirmining which events are crunch shifts')
+    return argument_parser.parse_args()
+
 def main():
-    # catch error if no args passed
-    work_shifts = get_shifts_from_calendar(argv[1], argv[2])
+    arguments = parse_arguments()
+    work_shifts = get_shifts_from_calendar(arguments.pathToIcs, arguments.shift_keyword)
     work_days = get_work_days_from_shifts(work_shifts)
     crunch_days = ShiftAnalysis.get_crunch_days(work_days)
     print("total shifts logged:", len(work_shifts))
