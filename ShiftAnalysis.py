@@ -5,9 +5,10 @@ from typing import List
 from statistics import mean
 
 class WorkShift:
-    def __init__(self, _start: datetime, _end: datetime):
+    def __init__(self, _start: datetime, _end: datetime, _is_crunch: bool):
         self.start = _start
         self.end = _end
+        self.is_crunch = _is_crunch
 
     def GetDuration(self) -> float:
         SECONDS_IN_HOUR = 3600
@@ -43,18 +44,19 @@ class ShiftAnalysis:
             work_day_durations.append(day.get_duration())
         return mean(work_day_durations)
 
-
-def get_shifts_from_calendar(path_to_calendar: str, keyword_identifier: str) -> List[WorkShift]:
+def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: str) -> List[WorkShift]:
     work_shifts = []
     source_file = open(path_to_calendar, 'rb')
     calendar = Calendar.from_ical(source_file.read())
     for component in calendar.walk():
         if component.name == 'VEVENT':
-            title = component.get('summary') 
-            if keyword_identifier.casefold() in title.casefold():
+            title = component.get('summary')
+            if shift_keyword_identifier.casefold() in title.casefold():
                 start = component.decoded('dtstart')
                 end = component.decoded('dtend')
-                new_shift = WorkShift(start, end)
+                crunch_keyword_identifier = "crunch"  # TODO: make this config adjustable
+                is_crunch = crunch_keyword_identifier.casefold() in title.casefold()
+                new_shift = WorkShift(start, end, is_crunch)
                 work_shifts.append(new_shift)
     source_file.close()
     return work_shifts
