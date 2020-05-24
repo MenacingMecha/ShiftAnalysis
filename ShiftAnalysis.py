@@ -28,6 +28,14 @@ class WorkDay:
         for shift in self.shifts:
             duration += shift.GetDuration()
         return duration
+    
+    def has_crunch(self) -> bool:
+        is_crunch = False
+        for shift in self.shifts:
+            if shift.is_crunch:
+                is_crunch = True
+                #break
+        return is_crunch
 
 class ShiftAnalysis:
     @staticmethod
@@ -43,6 +51,14 @@ class ShiftAnalysis:
         for day in work_days:
             work_day_durations.append(day.get_duration())
         return mean(work_day_durations)
+
+    @staticmethod
+    def get_crunch_days(workdays: List[WorkDay]) -> int:
+        crunch_days = 0
+        for workday in workdays:
+            if workday.has_crunch():
+                crunch_days += 1
+        return crunch_days
 
 def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: str) -> List[WorkShift]:
     work_shifts = []
@@ -83,10 +99,13 @@ def main():
     # catch error if no args passed
     work_shifts = get_shifts_from_calendar(argv[1], argv[2])
     work_days = get_work_days_from_shifts(work_shifts)
+    crunch_days = ShiftAnalysis.get_crunch_days(work_days)
     print("total shifts:", len(work_shifts))
-    print("mean shift duration:", ShiftAnalysis.get_mean_shift_duration(work_shifts))
-    print("work days:", len(work_days))
-    print("average work day duration:", ShiftAnalysis.get_mean_day_duration(work_days))
+    print("mean shift duration:", round(ShiftAnalysis.get_mean_shift_duration(work_shifts), 2))
+    print("mean work day duration:", round(ShiftAnalysis.get_mean_day_duration(work_days), 2))
+    percentage_of_crunch_days = crunch_days / len(work_days)
+    print("days with crunch:", crunch_days, "/", len(work_days),
+            "({:.0%})".format(percentage_of_crunch_days))
 
 if __name__ == '__main__':
     main()
