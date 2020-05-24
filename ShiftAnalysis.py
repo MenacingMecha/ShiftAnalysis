@@ -95,17 +95,21 @@ def get_work_days_from_shifts(shifts: List[WorkShift]) -> List[WorkDay]:
         workday_objects.append(workday)
     return workday_objects
 
+def print_duration_hours(summary:str, value:float, float_percision: int = 2):
+    print(summary+":", str(round(value, float_percision))+"h")
+
+def print_percentage(summary:str, value_a:int, value_b: int, float_percision: int = 2):
+    print(summary+":", value_a, "/", value_b, "({:.0%})".format(value_a/value_b))
+
 def main():
     # catch error if no args passed
     work_shifts = get_shifts_from_calendar(argv[1], argv[2])
     work_days = get_work_days_from_shifts(work_shifts)
     crunch_days = ShiftAnalysis.get_crunch_days(work_days)
-    print("total shifts:", len(work_shifts))
-    print("mean shift duration:", round(ShiftAnalysis.get_mean_shift_duration(work_shifts), 2))
-    print("mean work day duration:", round(ShiftAnalysis.get_mean_day_duration(work_days), 2))
-    percentage_of_crunch_days = crunch_days / len(work_days)
-    print("days with crunch:", crunch_days, "/", len(work_days),
-            "({:.0%})".format(percentage_of_crunch_days))
+    print("total shifts logged:", len(work_shifts))
+    print_duration_hours("mean shift duration", ShiftAnalysis.get_mean_shift_duration(work_shifts))
+    print_duration_hours("mean work day duration", ShiftAnalysis.get_mean_day_duration(work_days))
+    print_percentage("days with crunch", crunch_days, len(work_days))
 
 if __name__ == '__main__':
     main()
