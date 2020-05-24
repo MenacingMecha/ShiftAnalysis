@@ -44,16 +44,18 @@ class ShiftAnalysis:
         return mean(work_day_durations)
 
 
-def get_shifts_from_calendar(path_to_calendar: str) -> List[WorkShift]:
+def get_shifts_from_calendar(path_to_calendar: str, keyword_identifier: str) -> List[WorkShift]:
     work_shifts = []
     source_file = open(path_to_calendar, 'rb')
     calendar = Calendar.from_ical(source_file.read())
     for component in calendar.walk():
         if component.name == 'VEVENT':
-            start = component.decoded('dtstart')
-            end = component.decoded('dtend')
-            new_shift = WorkShift(start, end)
-            work_shifts.append(new_shift)
+            title = component.get('summary') 
+            if keyword_identifier.casefold() in title.casefold():
+                start = component.decoded('dtstart')
+                end = component.decoded('dtend')
+                new_shift = WorkShift(start, end)
+                work_shifts.append(new_shift)
     source_file.close()
     return work_shifts
 
@@ -77,7 +79,7 @@ def get_work_days_from_shifts(shifts: List[WorkShift]) -> List[WorkDay]:
 
 def main():
     # catch error if no args passed
-    work_shifts = get_shifts_from_calendar(argv[1])
+    work_shifts = get_shifts_from_calendar(argv[1], argv[2])
     work_days = get_work_days_from_shifts(work_shifts)
     print("total shifts:", len(work_shifts))
     print("mean shift duration:", ShiftAnalysis.get_mean_shift_duration(work_shifts))
