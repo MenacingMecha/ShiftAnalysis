@@ -1,12 +1,12 @@
 # TODO: change these all to 'import modulename'
 from argparse import ArgumentParser, Namespace
 from icalendar import Calendar
-from datetime import datetime, date
+import datetime
 from typing import List  # except this one
 import statistics
 
 class WorkShift:
-    def __init__(self, _start: datetime, _end: datetime, _is_crunch: bool):
+    def __init__(self, _start: datetime.datetime, _end: datetime.datetime, _is_crunch: bool):
         self.start = _start
         self.end = _end
         self.is_crunch = _is_crunch
@@ -20,7 +20,7 @@ class WorkShift:
         return hours
 
 class WorkDay:
-    def __init__(self, _date: date, _shifts: List[WorkShift]):
+    def __init__(self, _date: datetime.datetime.date, _shifts: List[WorkShift]):
         self.date = _date
         self.shifts = _shifts
 
