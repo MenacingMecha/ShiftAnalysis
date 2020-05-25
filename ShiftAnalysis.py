@@ -1,8 +1,7 @@
-# TODO: change these all to 'import modulename'
-from argparse import ArgumentParser, Namespace
+import argparse
 import datetime
 import statistics
-from typing import List  # except this one
+from typing import List
 import icalendar
 
 class WorkShift:
@@ -105,8 +104,8 @@ def print_duration_hours(summary:str, value:float, float_percision: int = 2):
 def print_percentage(summary:str, value_a:int, value_b: int, float_percision: int = 2):
     print(summary+":", value_a, "/", value_b, "({:.0%})".format(value_a/value_b))
 
-def parse_arguments() -> Namespace:
-    argument_parser = ArgumentParser(description="Analyse work habits from ical calendar")
+def parse_arguments() -> argparse.Namespace:
+    argument_parser = argparse.ArgumentParser(description="Analyse work habits from ical calendar")
     argument_parser.add_argument('pathToIcs', help='path to the ical file to analyse')
     argument_parser.add_argument('-s', dest='shift_keyword', default='Shift', help='keyword for detirmining which events are shifts')
     argument_parser.add_argument('-c', dest='crunch_keyword', default='Crunch', help='keyword for detirmining which events are crunch shifts')
