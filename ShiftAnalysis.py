@@ -15,7 +15,6 @@ class WorkShift:
         duration = self.end - self.start
         duration_in_s = duration.total_seconds()
         hours = duration_in_s / SECONDS_IN_HOUR
-        #print("day:", self.start.day)
         return hours
 
 class WorkDay:
@@ -34,7 +33,7 @@ class WorkDay:
         for shift in self.shifts:
             if shift.is_crunch:
                 is_crunch = True
-                #break
+                break
         return is_crunch
 
 class ShiftAnalysis:
@@ -43,7 +42,6 @@ class ShiftAnalysis:
         shift_durations = []
         for shift in shifts:
             shift_durations.append(shift.GetDuration())
-        # TODO: raise error if no shifts
         return statistics.mean(shift_durations)
 
     @staticmethod
@@ -51,7 +49,6 @@ class ShiftAnalysis:
         work_day_durations = []
         for day in work_days:
             work_day_durations.append(day.get_duration())
-        # TODO: raise error if no shifts
         return statistics.mean(work_day_durations)
 
     @staticmethod
@@ -61,6 +58,10 @@ class ShiftAnalysis:
             if workday.has_crunch():
                 crunch_days += 1
         return crunch_days
+
+class Error(Exception):
+    def __init__(self, message:str):
+        self.message = message
 
 def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: str,
         crunch_keyword_identifier: str) -> List[WorkShift]:
@@ -78,7 +79,9 @@ def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: st
                 new_shift = WorkShift(start, end, is_crunch)
                 work_shifts.append(new_shift)
     source_file.close()
-    # TODO: raise error if no shifts
+    if len(work_shifts) < 1:
+        raise Error("No work shifts found in " + path_to_calendar + " with the keyword '"
+            + shift_keyword_identifier + "'!")
     return work_shifts
 
 def get_work_days_from_shifts(shifts: List[WorkShift]) -> List[WorkDay]:
@@ -117,7 +120,7 @@ def parse_arguments() -> argparse.Namespace:
 def main():
     arguments = parse_arguments()
     work_shifts = get_shifts_from_calendar(arguments.pathToIcs, arguments.shift_keyword,
-        arguments.crunch_keyword_identifier)
+        arguments.crunch_keyword)
     work_days = get_work_days_from_shifts(work_shifts)
     crunch_days = ShiftAnalysis.get_crunch_days(work_days)
     print("total shifts logged:", len(work_shifts))
