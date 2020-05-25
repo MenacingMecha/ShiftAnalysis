@@ -1,10 +1,12 @@
 import argparse
 import datetime
 import statistics
-from typing import List
+from typing import List, Dict
 import icalendar
 
 class WorkShift:
+    """ A defined period of work time """
+
     def __init__(self, _start: datetime.datetime, _end: datetime.datetime, _is_crunch: bool):
         self.start = _start
         self.end = _end
@@ -18,6 +20,8 @@ class WorkShift:
         return hours
 
 class WorkDay:
+    """ A collection of shifts across a given day """
+
     def __init__(self, _date: datetime.datetime.date, _shifts: List[WorkShift]):
         self.date = _date
         self.shifts = _shifts
@@ -36,6 +40,19 @@ class WorkDay:
                 break
         return is_crunch
 
+class WorkWeek:
+    """ A collection of work days across a given week. Includes weekends for safety. """
+
+    def __init__(self, weekId: int, workdays: Dict[int, WorkDay]):
+        self.weekId = weekId
+        self.workdays = workdays
+    
+    def get_duration(self) -> float:
+        duration = 0.
+        for workday in self.workdays:
+            duration += workday.get_duration()
+        return duration
+
 class ShiftAnalysis:
     @staticmethod
     def get_mean_shift_duration(shifts: List[WorkShift]) -> float:
@@ -50,6 +67,13 @@ class ShiftAnalysis:
         for day in work_days:
             work_day_durations.append(day.get_duration())
         return statistics.mean(work_day_durations)
+
+    @staticmethod
+    def get_mean_week_duration(work_weeks: List[WorkWeek]) -> float:
+        work_week_durations = []
+        for week in work_weeks:
+            work_week_durations.append(week.get_duration())
+        return statistics.mean(work_week_durations)
 
     @staticmethod
     def get_crunch_days(workdays: List[WorkDay]) -> int:
@@ -85,6 +109,8 @@ def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: st
     return work_shifts
 
 def get_work_days_from_shifts(shifts: List[WorkShift]) -> List[WorkDay]:
+    """Converts a list of WorkShifts to a list of WorkDays"""
+
     # Construct unique key pairs of day/shifts
     workday_keypairs = {}
     for shift in shifts:
@@ -102,13 +128,35 @@ def get_work_days_from_shifts(shifts: List[WorkShift]) -> List[WorkDay]:
         workday_objects.append(workday)
     return workday_objects
 
+def get_work_weeks_from_days(days: List[WorkDay]) -> List[WorkWeek]:
+    """Converts a list of WorkDays to WorkWeeks"""
+
+    workweek_keypairs = {}
+    for day in days:
+        isoweek = day.date.isocalendar()[1]
+        if isoweek not in workweek_keypairs:
+            workweek_keypairs[isoweek] = []
+        workweek_keypairs[isoweek].append(day)
+    workweek_objects = []
+    for key in workweek_keypairs:
+        workweek = WorkWeek(key, workweek_keypairs[key])
+        workweek_objects.append(workweek)
+    assert len(workweek_objects) > 0
+    return workweek_objects
+
 def print_duration_hours(summary:str, value:float, float_percision: int = 2):
+    """Prints a duration value"""
+
     print(summary+":", str(round(value, float_percision))+"h")
 
 def print_percentage(summary:str, value_a:int, value_b: int, float_percision: int = 2):
+    """ Prints two values with their percentage difference"""
+
     print(summary+":", value_a, "/", value_b, "({:.0%})".format(value_a/value_b))
 
 def parse_arguments() -> argparse.Namespace:
+    """ Returns an argparse.Namespace (think struct) of parsed terminal arguments """
+
     argument_parser = argparse.ArgumentParser(description="Analyse work habits from ical calendar")
     argument_parser.add_argument('pathToIcs', help='path to the ical file to analyse')
     argument_parser.add_argument('-s', dest='shift_keyword', default='Shift',
@@ -123,10 +171,15 @@ def main():
         arguments.crunch_keyword)
     work_days = get_work_days_from_shifts(work_shifts)
     crunch_days = ShiftAnalysis.get_crunch_days(work_days)
+    work_weeks = get_work_weeks_from_days(work_days)
+    # for week in work_weeks:
+    #     print("week duration:", week.get_duration())
     print("total shifts logged:", len(work_shifts))
     print_duration_hours("mean shift duration", ShiftAnalysis.get_mean_shift_duration(work_shifts))
     print_duration_hours("mean work day duration", ShiftAnalysis.get_mean_day_duration(work_days))
+    print_duration_hours("mean work week duration", ShiftAnalysis.get_mean_week_duration(work_weeks))
     print_percentage("days with crunch", crunch_days, len(work_days))
+    print("number of work weeks:", len(work_weeks))
 
 if __name__ == '__main__':
     main()
