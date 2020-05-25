@@ -1,9 +1,9 @@
 # TODO: change these all to 'import modulename'
 from argparse import ArgumentParser, Namespace
-from icalendar import Calendar
 import datetime
-from typing import List  # except this one
 import statistics
+from typing import List  # except this one
+import icalendar
 
 class WorkShift:
     def __init__(self, _start: datetime.datetime, _end: datetime.datetime, _is_crunch: bool):
@@ -66,7 +66,7 @@ class ShiftAnalysis:
 def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: str) -> List[WorkShift]:
     work_shifts = []
     source_file = open(path_to_calendar, 'rb')
-    calendar = Calendar.from_ical(source_file.read())
+    calendar = icalendar.Calendar.from_ical(source_file.read())
     for component in calendar.walk():
         if component.name == 'VEVENT':
             title = component.get('summary')
