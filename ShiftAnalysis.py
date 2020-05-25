@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from icalendar import Calendar
 from datetime import datetime, date
 from typing import List  # except this one
-from statistics import mean
+import statistics
 
 class WorkShift:
     def __init__(self, _start: datetime, _end: datetime, _is_crunch: bool):
@@ -45,7 +45,7 @@ class ShiftAnalysis:
         for shift in shifts:
             shift_durations.append(shift.GetDuration())
         # TODO: raise error if no shifts
-        return mean(shift_durations)
+        return statistics.mean(shift_durations)
 
     @staticmethod
     def get_mean_day_duration(work_days: List[WorkDay]) -> float:
@@ -53,7 +53,7 @@ class ShiftAnalysis:
         for day in work_days:
             work_day_durations.append(day.get_duration())
         # TODO: raise error if no shifts
-        return mean(work_day_durations)
+        return statistics.mean(work_day_durations)
 
     @staticmethod
     def get_crunch_days(workdays: List[WorkDay]) -> int:
