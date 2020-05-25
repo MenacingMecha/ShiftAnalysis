@@ -62,8 +62,10 @@ class ShiftAnalysis:
                 crunch_days += 1
         return crunch_days
 
-def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: str) -> List[WorkShift]:
+def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: str,
+        crunch_keyword_identifier: str) -> List[WorkShift]:
     work_shifts = []
+    # TODO: refactor to 'with source_file open'
     source_file = open(path_to_calendar, 'rb')
     calendar = icalendar.Calendar.from_ical(source_file.read())
     for component in calendar.walk():
@@ -72,7 +74,6 @@ def get_shifts_from_calendar(path_to_calendar: str, shift_keyword_identifier: st
             if shift_keyword_identifier.casefold() in title.casefold():
                 start = component.decoded('dtstart')
                 end = component.decoded('dtend')
-                crunch_keyword_identifier = "crunch"  # TODO: make this config adjustable
                 is_crunch = crunch_keyword_identifier.casefold() in title.casefold()
                 new_shift = WorkShift(start, end, is_crunch)
                 work_shifts.append(new_shift)
@@ -107,13 +108,16 @@ def print_percentage(summary:str, value_a:int, value_b: int, float_percision: in
 def parse_arguments() -> argparse.Namespace:
     argument_parser = argparse.ArgumentParser(description="Analyse work habits from ical calendar")
     argument_parser.add_argument('pathToIcs', help='path to the ical file to analyse')
-    argument_parser.add_argument('-s', dest='shift_keyword', default='Shift', help='keyword for detirmining which events are shifts')
-    argument_parser.add_argument('-c', dest='crunch_keyword', default='Crunch', help='keyword for detirmining which events are crunch shifts')
+    argument_parser.add_argument('-s', dest='shift_keyword', default='Shift',
+        help='keyword for detirmining which events are shifts')
+    argument_parser.add_argument('-c', dest='crunch_keyword', default='Crunch',
+        help='keyword for detirmining which events are crunch shifts')
     return argument_parser.parse_args()
 
 def main():
     arguments = parse_arguments()
-    work_shifts = get_shifts_from_calendar(arguments.pathToIcs, arguments.shift_keyword)
+    work_shifts = get_shifts_from_calendar(arguments.pathToIcs, arguments.shift_keyword,
+        arguments.crunch_keyword_identifier)
     work_days = get_work_days_from_shifts(work_shifts)
     crunch_days = ShiftAnalysis.get_crunch_days(work_days)
     print("total shifts logged:", len(work_shifts))
