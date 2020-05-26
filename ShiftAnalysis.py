@@ -1,7 +1,7 @@
 import argparse
 import datetime
 import statistics
-from typing import List, Dict
+from typing import List, Dict, Iterable
 import icalendar
 
 class WorkShift:
@@ -54,26 +54,35 @@ class WorkWeek:
         return duration
 
 class ShiftAnalysis:
+    # based on https://www.kdnuggets.com/2017/02/removing-outliers-standard-deviation-python.html
+    @staticmethod
+    def get_mean_without_anomolies(data: Iterable[float], distance_to_cut: float = 1.5) -> float:
+        mean = statistics.mean(data)
+        standard_deviation = statistics.stdev(data)
+        data_without_anomolies = [x for x in data if (x > mean - distance_to_cut * standard_deviation)]
+        data_without_anomolies = [x for x in data_without_anomolies if (x < mean + distance_to_cut * standard_deviation)]
+        return statistics.mean(data_without_anomolies)
+
     @staticmethod
     def get_mean_shift_duration(shifts: List[WorkShift]) -> float:
         shift_durations = []
         for shift in shifts:
             shift_durations.append(shift.GetDuration())
-        return statistics.mean(shift_durations)
+        return ShiftAnalysis.get_mean_without_anomolies(shift_durations)
 
     @staticmethod
     def get_mean_day_duration(work_days: List[WorkDay]) -> float:
         work_day_durations = []
         for day in work_days:
             work_day_durations.append(day.get_duration())
-        return statistics.mean(work_day_durations)
+        return ShiftAnalysis.get_mean_without_anomolies(work_day_durations)
 
     @staticmethod
     def get_mean_week_duration(work_weeks: List[WorkWeek]) -> float:
         work_week_durations = []
         for week in work_weeks:
             work_week_durations.append(week.get_duration())
-        return statistics.mean(work_week_durations)
+        return ShiftAnalysis.get_mean_without_anomolies(work_week_durations)
 
     @staticmethod
     def get_crunch_days(workdays: List[WorkDay]) -> int:
@@ -172,8 +181,6 @@ def main():
     work_days = get_work_days_from_shifts(work_shifts)
     crunch_days = ShiftAnalysis.get_crunch_days(work_days)
     work_weeks = get_work_weeks_from_days(work_days)
-    # for week in work_weeks:
-    #     print("week duration:", week.get_duration())
     print("total shifts logged:", len(work_shifts))
     print_duration_hours("mean shift duration", ShiftAnalysis.get_mean_shift_duration(work_shifts))
     print_duration_hours("mean work day duration", ShiftAnalysis.get_mean_day_duration(work_days))
